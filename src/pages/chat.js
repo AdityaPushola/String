@@ -504,6 +504,8 @@ function setupDraggablePiP() {
     let isDragging = false;
     let startX, startY, pipX, pipY;
     let hasMoved = false;
+    let dragStartClientX, dragStartClientY;
+    const DRAG_THRESHOLD = 10; // px — movement under this counts as a tap
 
     // Get initial position from CSS
     const rect = pip.getBoundingClientRect();
@@ -514,6 +516,8 @@ function setupDraggablePiP() {
     function onStart(clientX, clientY) {
         isDragging = true;
         hasMoved = false;
+        dragStartClientX = clientX;
+        dragStartClientY = clientY;
         startX = clientX - pipX;
         startY = clientY - pipY;
         pip.style.cursor = 'grabbing';
@@ -522,6 +526,11 @@ function setupDraggablePiP() {
 
     function onMove(clientX, clientY) {
         if (!isDragging) return;
+
+        // Only count as drag if moved beyond threshold
+        const dx = clientX - dragStartClientX;
+        const dy = clientY - dragStartClientY;
+        if (!hasMoved && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
         hasMoved = true;
 
         const parent = pip.parentElement.getBoundingClientRect();
