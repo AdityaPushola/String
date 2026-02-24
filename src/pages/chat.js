@@ -551,28 +551,32 @@ function setupDraggablePiP() {
         pip.style.cursor = 'grab';
         pip.style.transition = '';
 
-        // Snap to nearest corner
-        if (hasMoved) {
-            const parent = pip.parentElement.getBoundingClientRect();
-            const pipRect = pip.getBoundingClientRect();
-            const centerX = pipX + pipRect.width / 2;
-            const centerY = pipY + pipRect.height / 2;
-            const midX = parent.width / 2;
-            const midY = parent.height / 2;
-            const margin = 12;
-
-            const snapX = centerX < midX ? margin : parent.width - pipRect.width - margin;
-            const snapY = centerY < midY ? margin : parent.height - pipRect.height - margin;
-
-            pipX = snapX;
-            pipY = snapY;
-
-            pip.style.transition = 'left 0.3s ease, top 0.3s ease';
-            pip.style.left = snapX + 'px';
-            pip.style.top = snapY + 'px';
-            pip.style.right = 'auto';
-            pip.style.bottom = 'auto';
+        if (!hasMoved) {
+            // Tap without drag — toggle expanded size
+            pip.classList.toggle('pip-expanded');
+            return;
         }
+
+        // Snap to nearest corner
+        const parent = pip.parentElement.getBoundingClientRect();
+        const pipRect = pip.getBoundingClientRect();
+        const centerX = pipX + pipRect.width / 2;
+        const centerY = pipY + pipRect.height / 2;
+        const midX = parent.width / 2;
+        const midY = parent.height / 2;
+        const margin = 12;
+
+        const snapX = centerX < midX ? margin : parent.width - pipRect.width - margin;
+        const snapY = centerY < midY ? margin : parent.height - pipRect.height - margin;
+
+        pipX = snapX;
+        pipY = snapY;
+
+        pip.style.transition = 'left 0.3s ease, top 0.3s ease';
+        pip.style.left = snapX + 'px';
+        pip.style.top = snapY + 'px';
+        pip.style.right = 'auto';
+        pip.style.bottom = 'auto';
     }
 
     // Mouse events

@@ -264,6 +264,13 @@
     border-color: var(--accent-primary);
 }
 
+/* Expanded PiP (tap to enlarge) */
+.local-video-wrapper.pip-expanded {
+    width: 180px;
+    height: 270px;
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
 /* Camera flip button on local video */
 .btn-camera-flip {
     position: absolute;
@@ -792,8 +799,7 @@
 }
 
 .chat-page.is-fullscreen.controls-hidden .local-video-wrapper {
-    opacity: 0.3;
-    transition: opacity 0.4s ease;
+    opacity: 1;
 }
 
 .chat-page.is-fullscreen.controls-hidden .btn-fullscreen {
@@ -1155,6 +1161,11 @@
         width: 90px;
         height: 135px;
         border-radius: var(--radius-md);
+    }
+
+    .local-video-wrapper.pip-expanded {
+        width: 140px;
+        height: 210px;
     }
 
     .btn-camera-flip {
