@@ -17,6 +17,7 @@ export class Timer {
     }
 
     start() {
+        this.stop(); // Clear any existing interval to prevent double-speed
         this.seconds = 0;
         this._update();
         this.intervalId = setInterval(() => {
