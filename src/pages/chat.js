@@ -505,110 +505,27 @@ function setupDraggablePiP() {
 
     let isDragging = false;
     let startX, startY, pipX, pipY;
-    let hasMoved = false;
-    let dragStartClientX, dragStartClientY;
+    let justDragged = false;
     const DRAG_THRESHOLD = 10;
+    let dragOriginX, dragOriginY;
 
-    // Get initial position from CSS
+    // Get initial position
     const rect = pip.getBoundingClientRect();
     const parent = pip.parentElement.getBoundingClientRect();
     pipX = rect.left - parent.left;
     pipY = rect.top - parent.top;
 
-    function onStart(clientX, clientY) {
-        isDragging = true;
-        hasMoved = false;
-        dragStartClientX = clientX;
-        dragStartClientY = clientY;
-        startX = clientX - pipX;
-        startY = clientY - pipY;
-        pip.style.cursor = 'grabbing';
-        pip.style.transition = 'none';
-    }
-
-    function onMove(clientX, clientY) {
-        if (!isDragging) return;
-        const dx = clientX - dragStartClientX;
-        const dy = clientY - dragStartClientY;
-        if (!hasMoved && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
-        hasMoved = true;
-
-        const parent = pip.parentElement.getBoundingClientRect();
-        const pipRect = pip.getBoundingClientRect();
-
-        let newX = clientX - startX;
-        let newY = clientY - startY;
-
-        const maxX = parent.width - pipRect.width;
-        const maxY = parent.height - pipRect.height;
-        newX = Math.max(0, Math.min(newX, maxX));
-        newY = Math.max(0, Math.min(newY, maxY));
-
-        pipX = newX;
-        pipY = newY;
-
-        pip.style.left = newX + 'px';
-        pip.style.top = newY + 'px';
-        pip.style.right = 'auto';
-        pip.style.bottom = 'auto';
-    }
-
-    function onEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        pip.style.cursor = 'grab';
-        pip.style.transition = '';
-
-        if (!hasMoved) {
-            // Tap without drag — swap videos
-            videoContainer.classList.add('videos-swapped');
-            return;
+    // ── Instant tap-to-swap via click (fires after mouseup/touchend) ──
+    pip.addEventListener('click', (e) => {
+        if (justDragged) {
+            justDragged = false;
+            return; // Was a drag, not a tap
         }
-
-        // Snap to nearest corner
-        const parent = pip.parentElement.getBoundingClientRect();
-        const pipRect = pip.getBoundingClientRect();
-        const centerX = pipX + pipRect.width / 2;
-        const centerY = pipY + pipRect.height / 2;
-        const midX = parent.width / 2;
-        const midY = parent.height / 2;
-        const margin = 12;
-
-        const snapX = centerX < midX ? margin : parent.width - pipRect.width - margin;
-        const snapY = centerY < midY ? margin : parent.height - pipRect.height - margin;
-
-        pipX = snapX;
-        pipY = snapY;
-
-        pip.style.transition = 'left 0.3s ease, top 0.3s ease';
-        pip.style.left = snapX + 'px';
-        pip.style.top = snapY + 'px';
-        pip.style.right = 'auto';
-        pip.style.bottom = 'auto';
-    }
-
-    // Mouse events
-    pip.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        onStart(e.clientX, e.clientY);
+        e.stopPropagation();
+        videoContainer.classList.add('videos-swapped');
     });
-    document.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
-    document.addEventListener('mouseup', onEnd);
 
-    // Touch events
-    pip.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        onStart(touch.clientX, touch.clientY);
-    }, { passive: true });
-    document.addEventListener('touchmove', (e) => {
-        if (isDragging) {
-            const touch = e.touches[0];
-            onMove(touch.clientX, touch.clientY);
-        }
-    }, { passive: true });
-    document.addEventListener('touchend', onEnd);
-
-    // Tap on remote video (or anywhere on main screen) to swap back
+    // Tap remote (now PiP) or anywhere to swap back
     if (remoteWrapper) {
         remoteWrapper.addEventListener('click', () => {
             if (videoContainer.classList.contains('videos-swapped')) {
@@ -616,6 +533,91 @@ function setupDraggablePiP() {
             }
         });
     }
+
+    // ── Drag logic ──
+    function onDragStart(clientX, clientY) {
+        isDragging = true;
+        justDragged = false;
+        dragOriginX = clientX;
+        dragOriginY = clientY;
+        startX = clientX - pipX;
+        startY = clientY - pipY;
+    }
+
+    function onDragMove(clientX, clientY) {
+        if (!isDragging) return;
+
+        const dx = clientX - dragOriginX;
+        const dy = clientY - dragOriginY;
+        if (!justDragged && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+        justDragged = true;
+
+        pip.style.transition = 'none';
+        const parent = pip.parentElement.getBoundingClientRect();
+        const pipRect = pip.getBoundingClientRect();
+
+        let newX = clientX - startX;
+        let newY = clientY - startY;
+        const maxX = parent.width - pipRect.width;
+        const maxY = parent.height - pipRect.height;
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        pipX = newX;
+        pipY = newY;
+        pip.style.left = newX + 'px';
+        pip.style.top = newY + 'px';
+        pip.style.right = 'auto';
+        pip.style.bottom = 'auto';
+    }
+
+    function onDragEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        if (justDragged) {
+            // Snap to nearest corner
+            const parent = pip.parentElement.getBoundingClientRect();
+            const pipRect = pip.getBoundingClientRect();
+            const centerX = pipX + pipRect.width / 2;
+            const centerY = pipY + pipRect.height / 2;
+            const midX = parent.width / 2;
+            const midY = parent.height / 2;
+            const margin = 12;
+
+            const snapX = centerX < midX ? margin : parent.width - pipRect.width - margin;
+            const snapY = centerY < midY ? margin : parent.height - pipRect.height - margin;
+
+            pipX = snapX;
+            pipY = snapY;
+            pip.style.transition = 'left 0.3s ease, top 0.3s ease';
+            pip.style.left = snapX + 'px';
+            pip.style.top = snapY + 'px';
+            pip.style.right = 'auto';
+            pip.style.bottom = 'auto';
+        }
+    }
+
+    // Mouse
+    pip.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        onDragStart(e.clientX, e.clientY);
+    });
+    document.addEventListener('mousemove', (e) => onDragMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup', onDragEnd);
+
+    // Touch
+    pip.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        onDragStart(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+        if (isDragging) {
+            const t = e.touches[0];
+            onDragMove(t.clientX, t.clientY);
+        }
+    }, { passive: true });
+    document.addEventListener('touchend', onDragEnd);
 }
 
 // ─── Text Chat ────────────────────────────────────────────────────────
