@@ -264,11 +264,54 @@
     border-color: var(--accent-primary);
 }
 
-/* Expanded PiP (tap to enlarge) */
-.local-video-wrapper.pip-expanded {
-    width: 180px;
-    height: 270px;
-    transition: width 0.3s ease, height 0.3s ease;
+/* ── Video Swap: tap PiP to make local fullscreen, remote becomes PiP ── */
+.videos-swapped .local-video-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 1;
+    cursor: default;
+    transition: all 0.4s ease;
+}
+
+.videos-swapped .local-video-wrapper video {
+    border-radius: 0;
+    object-fit: contain;
+    background: #000;
+}
+
+.videos-swapped .remote-video-wrapper {
+    position: absolute !important;
+    bottom: 100px;
+    right: 16px;
+    width: 120px !important;
+    height: 180px !important;
+    border-radius: var(--radius-lg);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: calc(var(--z-elevated) + 2);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.4s ease;
+}
+
+.videos-swapped .remote-video-wrapper video {
+    object-fit: cover;
+}
+
+.videos-swapped .btn-camera-flip {
+    display: none;
+}
+
+.videos-swapped .btn-fullscreen {
+    display: none;
 }
 
 /* Camera flip button on local video */
@@ -1163,9 +1206,12 @@
         border-radius: var(--radius-md);
     }
 
-    .local-video-wrapper.pip-expanded {
-        width: 140px;
-        height: 210px;
+    .videos-swapped .remote-video-wrapper {
+        bottom: 90px;
+        right: 8px;
+        width: 90px !important;
+        height: 135px !important;
+        border-radius: var(--radius-md);
     }
 
     .btn-camera-flip {

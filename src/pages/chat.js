@@ -496,16 +496,18 @@ function showControlsTemporarily() {
     }, 3000);
 }
 
-// ─── Draggable PiP (Local Video) ──────────────────────────────────────
+// ─── Draggable PiP + Tap-to-Swap ─────────────────────────────────────
 function setupDraggablePiP() {
     const pip = document.getElementById('local-wrapper');
-    if (!pip) return;
+    const videoContainer = document.getElementById('video-container');
+    const remoteWrapper = document.getElementById('remote-wrapper');
+    if (!pip || !videoContainer) return;
 
     let isDragging = false;
     let startX, startY, pipX, pipY;
     let hasMoved = false;
     let dragStartClientX, dragStartClientY;
-    const DRAG_THRESHOLD = 10; // px — movement under this counts as a tap
+    const DRAG_THRESHOLD = 10;
 
     // Get initial position from CSS
     const rect = pip.getBoundingClientRect();
@@ -526,8 +528,6 @@ function setupDraggablePiP() {
 
     function onMove(clientX, clientY) {
         if (!isDragging) return;
-
-        // Only count as drag if moved beyond threshold
         const dx = clientX - dragStartClientX;
         const dy = clientY - dragStartClientY;
         if (!hasMoved && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
@@ -539,7 +539,6 @@ function setupDraggablePiP() {
         let newX = clientX - startX;
         let newY = clientY - startY;
 
-        // Constrain to parent bounds
         const maxX = parent.width - pipRect.width;
         const maxY = parent.height - pipRect.height;
         newX = Math.max(0, Math.min(newX, maxX));
@@ -561,8 +560,8 @@ function setupDraggablePiP() {
         pip.style.transition = '';
 
         if (!hasMoved) {
-            // Tap without drag — toggle expanded size
-            pip.classList.toggle('pip-expanded');
+            // Tap without drag — swap videos
+            videoContainer.classList.add('videos-swapped');
             return;
         }
 
@@ -608,6 +607,15 @@ function setupDraggablePiP() {
         }
     }, { passive: true });
     document.addEventListener('touchend', onEnd);
+
+    // Tap on remote video (or anywhere on main screen) to swap back
+    if (remoteWrapper) {
+        remoteWrapper.addEventListener('click', () => {
+            if (videoContainer.classList.contains('videos-swapped')) {
+                videoContainer.classList.remove('videos-swapped');
+            }
+        });
+    }
 }
 
 // ─── Text Chat ────────────────────────────────────────────────────────
